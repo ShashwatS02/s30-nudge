@@ -4,8 +4,21 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo db-build-not-set-yet",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.cjs",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.cjs",
+    "db:push": "drizzle-kit push --config=drizzle.config.cjs",
+    "build": "tsc -p tsconfig.json",
     "lint": "echo db-lint-not-set-yet",
-    "typecheck": "echo db-typecheck-not-set-yet"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
+    "drizzle-orm": "^0.44.5"
+  },
+  "devDependencies": {
+    "dotenv": "^16.6.1",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.3"
   }
 }
