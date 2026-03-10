@@ -1,0 +1,12 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo api-dev-not-set-yet",
+    "build": "echo api-build-not-set-yet",
+    "lint": "echo api-lint-not-set-yet",
+    "typecheck": "echo api-typecheck-not-set-yet"
+  }
+}

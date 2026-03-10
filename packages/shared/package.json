@@ -1,0 +1,11 @@
+{
+  "name": "@s30-nudge/shared",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo shared-build-not-set-yet",
+    "lint": "echo shared-lint-not-set-yet",
+    "typecheck": "echo shared-typecheck-not-set-yet"
+  }
+}

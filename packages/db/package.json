@@ -1,0 +1,11 @@
+{
+  "name": "@s30-nudge/db",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo db-build-not-set-yet",
+    "lint": "echo db-lint-not-set-yet",
+    "typecheck": "echo db-typecheck-not-set-yet"
+  }
+}

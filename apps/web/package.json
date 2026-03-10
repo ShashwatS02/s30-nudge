@@ -1,0 +1,12 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo web-dev-not-set-yet",
+    "build": "echo web-build-not-set-yet",
+    "lint": "echo web-lint-not-set-yet",
+    "typecheck": "echo web-typecheck-not-set-yet"
+  }
+}

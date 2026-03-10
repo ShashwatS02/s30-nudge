@@ -1,0 +1,11 @@
+{
+  "name": "@s30-nudge/ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo ui-build-not-set-yet",
+    "lint": "echo ui-lint-not-set-yet",
+    "typecheck": "echo ui-typecheck-not-set-yet"
+  }
+}
