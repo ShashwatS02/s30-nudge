@@ -41,6 +41,23 @@ export const users = pgTable(
   })
 );
 
+export const refreshSessions = pgTable(
+  "refresh_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    tokenHashUniqueIdx: uniqueIndex("refresh_sessions_token_hash_unique_idx").on(table.tokenHash)
+  })
+);
+
 export const spaces = pgTable("spaces", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

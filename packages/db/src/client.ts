@@ -1,11 +1,21 @@
-import { neon } from "@neondatabase/serverless";
+import dotenv from "dotenv";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { drizzle } from "drizzle-orm/neon-http";
-import * as schema from "./schema.js";
+import { neon } from "@neondatabase/serverless";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("Missing DATABASE_URL in environment");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, "../../../.env");
+
+dotenv.config({ path: envPath });
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error(`Missing DATABASE_URL in environment. Expected .env at: ${envPath}`);
 }
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = neon(databaseUrl);
 
-export const db = drizzle(sql, { schema });
+export const db = drizzle(sql);

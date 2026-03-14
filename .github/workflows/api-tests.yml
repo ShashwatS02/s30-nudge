@@ -1,0 +1,41 @@
+name: API Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create API env
+        run: |
+          cat > apps/api/.env <<'EOF'
+          ACCESS_TOKEN_SECRET=test-secret-for-ci-only
+          REFRESH_TOKEN_TTL_DAYS=30
+          PORT=4000
+          EOF
+
+      - name: Run API tests
+        run: pnpm --dir apps/api test

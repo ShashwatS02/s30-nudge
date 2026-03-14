@@ -4,9 +4,22 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "echo web-dev-not-set-yet",
-    "build": "echo web-build-not-set-yet",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "lint": "echo web-lint-not-set-yet",
-    "typecheck": "echo web-typecheck-not-set-yet"
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.13.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.0"
   }
 }
