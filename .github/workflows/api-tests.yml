@@ -27,6 +27,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Create root env for db package
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          EOF
+
       - name: Create API env
         run: |
           cat > apps/api/.env <<'EOF'
