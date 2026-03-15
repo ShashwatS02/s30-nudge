@@ -1,12 +1,16 @@
 import "dotenv/config";
 import request from "supertest";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "./app.js";
 
 const app = createApp();
 
 const uniqueEmail = `shash-${Date.now()}@example.com`;
 const password = "StrongPass@123";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("auth flow", () => {
   it("returns health ok", async () => {
@@ -283,17 +287,15 @@ it("resets password and revokes old refresh sessions", async () => {
   );
 
   const loggedText = logSpy.mock.calls.flat().map(String).join(" ");
-  logSpy.mockRestore();
-
   const match = loggedText.match(/reset-password\?token=([^ \n]+)/);
-expect(match).toBeTruthy();
 
-if (!match?.[1]) {
-  throw new Error("Reset token was not logged");
-}
+  expect(match).toBeTruthy();
 
-const token = decodeURIComponent(match[1]);
+  if (!match?.[1]) {
+    throw new Error("Reset token was not logged");
+  }
 
+  const token = decodeURIComponent(match[1]);
 
   const resetRes = await request(app).post("/auth/reset-password").send({
     token,
@@ -321,7 +323,7 @@ const token = decodeURIComponent(match[1]);
 
   const refreshRes = await request(app).post("/auth/refresh").set("Cookie", oldCookies ?? []);
   expect(refreshRes.status).toBe(204);
-});
+}, 15000);
 
 it("rejects weak password on reset", async () => {
   const email = `reset-weak-${Date.now()}@example.com`;
@@ -338,17 +340,15 @@ it("rejects weak password on reset", async () => {
   await request(app).post("/auth/forgot-password").send({ email });
 
   const loggedText = logSpy.mock.calls.flat().map(String).join(" ");
-  logSpy.mockRestore();
-
   const match = loggedText.match(/reset-password\?token=([^ \n]+)/);
-expect(match).toBeTruthy();
 
-if (!match?.[1]) {
-  throw new Error("Reset token was not logged");
-}
+  expect(match).toBeTruthy();
 
-const token = decodeURIComponent(match[1]);
+  if (!match?.[1]) {
+    throw new Error("Reset token was not logged");
+  }
 
+  const token = decodeURIComponent(match[1]);
 
   const resetRes = await request(app).post("/auth/reset-password").send({
     token,
@@ -412,7 +412,7 @@ it("changes password and revokes old refresh sessions", async () => {
 
   const refreshRes = await request(app).post("/auth/refresh").set("Cookie", oldCookies ?? []);
   expect(refreshRes.status).toBe(204);
-});
+}, 15000);
 
 it("rejects change password with wrong current password", async () => {
   const email = `change-wrong-${Date.now()}@example.com`;

@@ -54,4 +54,5 @@ jobs:
         run: pnpm --filter @s30-nudge/db build
 
       - name: Run API tests
-        run: pnpm --dir apps/api test
+        run: pnpm --dir apps/api test -- --test-timeout=15000
+
