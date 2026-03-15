@@ -7,7 +7,7 @@ import { db, passwordResetTokens, refreshSessions, spaceMembers, spaces, users }
 import { v4 as uuidv4 } from "uuid";
 import { authEmailLimiter, authIpLimiter } from "../lib/authRateLimit.js";
 import { OAuth2Client } from "google-auth-library";
-
+import { sendPasswordResetEmail } from "../lib/email.js";
 
 const router = Router();
 
@@ -455,9 +455,15 @@ router.post("/forgot-password", authEmailLimiter, async (req, res) => {
       const rawToken = await createPasswordResetToken(user.id);
       const resetUrl = buildResetPasswordUrl(rawToken);
 
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`Password reset link for ${user.email}: ${resetUrl}`);
-      }
+      await sendPasswordResetEmail({
+  to: user.email,
+  resetUrl
+});
+
+if (process.env.NODE_ENV !== "production") {
+  console.log(`Password reset link for ${user.email}: ${resetUrl}`);
+}
+
     }
 
     res.json({
