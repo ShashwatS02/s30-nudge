@@ -8,23 +8,27 @@ function getEnv(name: string) {
   return value;
 }
 
-const transporter = nodemailer.createTransport({
-  host: getEnv("SMTP_HOST"),
-  port: Number(process.env.SMTP_PORT ?? 587),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: getEnv("SMTP_USER"),
-    pass: getEnv("SMTP_PASS")
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000
-});
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: getEnv("SMTP_HOST"),
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: getEnv("SMTP_USER"),
+      pass: getEnv("SMTP_PASS")
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000
+  });
+}
 
 export async function sendPasswordResetEmail(input: {
   to: string;
   resetUrl: string;
 }) {
+  const transporter = getTransporter();
+
   const info = await transporter.sendMail({
     from: getEnv("EMAIL_FROM"),
     to: input.to,
