@@ -11,27 +11,29 @@ export function createApp() {
   const app = express();
 
   const allowedOrigins = [
-  "http://127.0.0.1:5173",
-  "http://localhost:5173",
-  "http://127.0.0.1:5174",
-  "http://localhost:5174",
-  process.env.FRONTEND_URL
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5174",
+    "http://localhost:5174",
+    process.env.FRONTEND_URL
   ].filter(Boolean) as string[];
 
+  const corsOptions: cors.CorsOptions = {
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
 
-  app.use(
-    cors({
-      origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-          return;
-        }
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  };
 
-        callback(new Error(`CORS blocked for origin: ${origin}`));
-      },
-      credentials: true
-    })
-  );
+  app.use(cors(corsOptions));
+  app.options(/.*/, cors(corsOptions));
 
   app.use((req, res, next) => {
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
