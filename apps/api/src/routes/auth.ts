@@ -450,25 +450,26 @@ router.post("/forgot-password", authEmailLimiter, async (req, res) => {
     const user = found[0];
 
     if (user) {
-      await markPasswordResetTokensUsedForUser(user.id);
+  await markPasswordResetTokensUsedForUser(user.id);
 
-      const rawToken = await createPasswordResetToken(user.id);
-      const resetUrl = buildResetPasswordUrl(rawToken);
+  const rawToken = await createPasswordResetToken(user.id);
+  const resetUrl = buildResetPasswordUrl(rawToken);
 
-      await sendPasswordResetEmail({
-  to: user.email,
-  resetUrl
-});
-
-if (process.env.NODE_ENV !== "production") {
-  console.log(`Password reset link for ${user.email}: ${resetUrl}`);
+  try {
+    await sendPasswordResetEmail({
+      to: user.email,
+      resetUrl
+    });
+  } catch (error) {
+    console.error("Password reset email send failed:", error);
+    console.log(`Fallback password reset link for ${user.email}: ${resetUrl}`);
+  }
 }
 
-    }
+res.json({
+  message: "If an account with that email exists, a reset link has been sent"
+});
 
-    res.json({
-      message: "If an account with that email exists, a reset link has been sent"
-    });
   } catch (error) {
   console.error("Forgot password failed:", error);
   const message = error instanceof Error ? error.message : "Unknown error";

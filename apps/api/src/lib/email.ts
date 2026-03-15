@@ -15,15 +15,16 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: getEnv("SMTP_USER"),
     pass: getEnv("SMTP_PASS")
-  }
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000
 });
 
 export async function sendPasswordResetEmail(input: {
   to: string;
   resetUrl: string;
 }) {
-  await transporter.verify();
-
   const info = await transporter.sendMail({
     from: getEnv("EMAIL_FROM"),
     to: input.to,
