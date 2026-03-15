@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, loginWithGoogle } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -30,6 +32,23 @@ export default function SignupPage() {
       setPending(false);
     }
   }
+
+  const handleGoogleLogin = useCallback(
+    async (idToken: string) => {
+      setError("");
+
+      try {
+        setGooglePending(true);
+        await loginWithGoogle(idToken);
+        navigate("/app");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to continue with Google");
+      } finally {
+        setGooglePending(false);
+      }
+    },
+    [loginWithGoogle, navigate]
+  );
 
   return (
     <main className="app-shell auth-shell">
@@ -142,14 +161,15 @@ export default function SignupPage() {
                 <span>or continue with</span>
               </div>
 
-              <button
-                className="secondary-btn auth-google-btn"
-                type="button"
-                onClick={() => setError("Google sign-in comes right after core auth is stable.")}
-              >
-                <span className="auth-google-icon">G</span>
-                <span>Continue with Google</span>
-              </button>
+              <GoogleSignInButton
+                onCredential={handleGoogleLogin}
+                onError={setError}
+                text="signup_with"
+              />
+
+              {googlePending ? (
+                <p className="auth-support-copy">Continuing with Google...</p>
+              ) : null}
 
               <p className="auth-switch-copy">
                 Already have an account?{" "}

@@ -217,6 +217,32 @@ export async function getDashboard(spaceId: string) {
   return request<DashboardResponse>(buildUrl("/dashboard", { spaceId }));
 }
 
+export async function forgotPassword(email: string) {
+  return request<{ message: string }>(buildUrl("/auth/forgot-password"), {
+    method: "POST",
+    body: JSON.stringify({ email })
+  });
+}
+
+export async function resetPassword(input: { token: string; password: string }) {
+  return request<{ message: string }>(buildUrl("/auth/reset-password"), {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function changePassword(
+  accessToken: string,
+  input: { currentPassword: string; newPassword: string }
+) {
+  return request<{ message: string }>(buildUrl("/auth/change-password"), {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify(input)
+  });
+}
+
+
 export async function updateItem(
   id: string,
   input: {
@@ -237,3 +263,11 @@ export async function deleteItem(id: string) {
     method: "DELETE"
   });
 }
+
+export async function googleLogin(idToken: string) {
+  return request<AuthResponse>(buildUrl("/auth/google"), {
+    method: "POST",
+    body: JSON.stringify({ idToken })
+  });
+}
+

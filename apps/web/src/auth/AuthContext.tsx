@@ -8,6 +8,7 @@ import {
   type ReactNode
 } from "react";
 import {
+  googleLogin as apiGoogleLogin,
   login as apiLogin,
   logout as apiLogout,
   refreshSession as apiRefreshSession,
@@ -22,6 +23,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
   login: (input: { email: string; password: string }) => Promise<AuthResponse>;
+  loginWithGoogle: (idToken: string) => Promise<AuthResponse>;
   signUp: (input: {
     fullName: string;
     email: string;
@@ -76,14 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   }, [clearAuthState]);
 
-  const login = useCallback(
-    async (input: { email: string; password: string }) => {
-      const data = await apiLogin(input);
-      applyAuthState(data, setUser, setAccessToken);
-      return data;
-    },
-    []
-  );
+  const login = useCallback(async (input: { email: string; password: string }) => {
+    const data = await apiLogin(input);
+    applyAuthState(data, setUser, setAccessToken);
+    return data;
+  }, []);
+
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    const data = await apiGoogleLogin(idToken);
+    applyAuthState(data, setUser, setAccessToken);
+    return data;
+  }, []);
 
   const signUp = useCallback(
     async (input: { fullName: string; email: string; password: string }) => {
@@ -144,11 +149,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user && accessToken),
       isBootstrapping,
       login,
+      loginWithGoogle,
       signUp,
       logout,
       refreshSession
     }),
-    [user, accessToken, isBootstrapping, login, signUp, logout, refreshSession]
+    [
+      user,
+      accessToken,
+      isBootstrapping,
+      login,
+      loginWithGoogle,
+      signUp,
+      logout,
+      refreshSession
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

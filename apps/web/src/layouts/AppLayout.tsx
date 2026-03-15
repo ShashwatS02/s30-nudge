@@ -1,6 +1,11 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+
+export type AppShellContext = {
+  searchQuery: string;
+  newItemRequest: number;
+};
 
 const navItems = [
   { to: "/app", label: "Dashboard", hint: "Run your full life-admin system" },
@@ -22,8 +27,12 @@ function getFirstName(fullName?: string | null) {
 
 export default function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
+
   const [loggingOut, setLoggingOut] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newItemRequest, setNewItemRequest] = useState(0);
 
   async function handleLogout() {
     try {
@@ -33,6 +42,22 @@ export default function AppLayout() {
     } finally {
       setLoggingOut(false);
     }
+  }
+
+  function handleSearchChange(value: string) {
+    setSearchQuery(value);
+
+    if (location.pathname !== "/app") {
+      navigate("/app");
+    }
+  }
+
+  function handleNewItem() {
+    if (location.pathname !== "/app") {
+      navigate("/app");
+    }
+
+    setNewItemRequest((value) => value + 1);
   }
 
   const initials = getInitials(user?.fullName);
@@ -111,18 +136,34 @@ export default function AppLayout() {
               </p>
             </div>
 
-            <div className="topbar-actions">
-              <button className="secondary-btn" type="button">
-                Search
-              </button>
-              <button className="primary-btn" type="button">
+            <div className="topbar-actions" style={{ alignItems: "center", gap: 12 }}>
+              <input
+                className="input-shell"
+                type="text"
+                placeholder="Search title, notes, type, or status"
+                value={searchQuery}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                style={{ minWidth: 280 }}
+              />
+
+              {searchQuery ? (
+                <button
+                  className="secondary-btn"
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                >
+                  Clear
+                </button>
+              ) : null}
+
+              <button className="primary-btn" type="button" onClick={handleNewItem}>
                 New item
               </button>
             </div>
           </header>
 
           <div className="main-content">
-            <Outlet />
+            <Outlet context={{ searchQuery, newItemRequest } satisfies AppShellContext} />
           </div>
         </section>
       </div>

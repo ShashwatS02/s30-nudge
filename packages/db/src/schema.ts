@@ -58,6 +58,25 @@ export const refreshSessions = pgTable(
   })
 );
 
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    tokenHashUniqueIdx: uniqueIndex("password_reset_tokens_token_hash_unique_idx").on(
+      table.tokenHash
+    )
+  })
+);
+
 export const spaces = pgTable("spaces", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

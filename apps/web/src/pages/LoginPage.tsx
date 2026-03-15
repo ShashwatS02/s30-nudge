@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -28,6 +30,23 @@ export default function LoginPage() {
       setPending(false);
     }
   }
+
+  const handleGoogleLogin = useCallback(
+    async (idToken: string) => {
+      setError("");
+
+      try {
+        setGooglePending(true);
+        await loginWithGoogle(idToken);
+        navigate("/app");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to sign in with Google");
+      } finally {
+        setGooglePending(false);
+      }
+    },
+    [loginWithGoogle, navigate]
+  );
 
   return (
     <main className="app-shell auth-shell">
@@ -68,9 +87,7 @@ export default function LoginPage() {
             <div className="auth-form-head">
               <span className="section-kicker">Access</span>
               <h2 className="section-title">Sign in</h2>
-              <p className="section-copy">
-                Use your account to enter the workspace.
-              </p>
+              <p className="section-copy">Use your account to enter the workspace.</p>
             </div>
 
             <form className="auth-form-grid" onSubmit={handleSubmit}>
@@ -95,13 +112,9 @@ export default function LoginPage() {
                   <label className="field-label" htmlFor="login-password">
                     Password
                   </label>
-                  <button
-                    type="button"
-                    className="auth-inline-link"
-                    onClick={() => setError("Forgot password flow is the next auth step.")}
-                  >
+                  <Link to="/forgot-password" className="auth-inline-link">
                     Forgot password
-                  </button>
+                  </Link>
                 </div>
 
                 <input
@@ -126,14 +139,11 @@ export default function LoginPage() {
                 <span>or continue with</span>
               </div>
 
-              <button
-                className="secondary-btn auth-google-btn"
-                type="button"
-                onClick={() => setError("Google sign-in comes right after core auth is stable.")}
-              >
-                <span className="auth-google-icon">G</span>
-                <span>Continue with Google</span>
-              </button>
+              <GoogleSignInButton onCredential={handleGoogleLogin} onError={setError} />
+
+              {googlePending ? (
+                <p className="auth-support-copy">Signing in with Google...</p>
+              ) : null}
 
               <p className="auth-switch-copy">
                 New here?{" "}

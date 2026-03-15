@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import ActiveFilterSummary from "../components/ActiveFilterSummary";
 import CreateItemForm from "../components/CreateItemForm";
@@ -21,7 +21,15 @@ import {
   type ItemType
 } from "../lib/api";
 
-export default function AppDashboard() {
+type AppDashboardProps = {
+  searchQuery: string;
+  newItemRequest: number;
+};
+
+export default function AppDashboard({
+  searchQuery,
+  newItemRequest
+}: AppDashboardProps) {
   const { user } = useAuth();
   const spaceId = user?.defaultSpaceId ?? null;
   const userId = user?.id ?? null;
@@ -34,12 +42,14 @@ export default function AppDashboard() {
   const [toast, setToast] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
 
+  const createSectionRef = useRef<HTMLElement | null>(null);
+
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(null), 2200);
   }
 
-  async function loadData(filter: StatusFilterValue = statusFilter) {
+  async function loadData() {
     if (!spaceId) {
       setItems([]);
       setDashboard(null);
@@ -55,8 +65,7 @@ export default function AppDashboard() {
       const [itemsData, dashboardData] = await Promise.all([
         getItems({
           spaceId,
-          sort: "oldest",
-          status: filter === "all" ? undefined : filter
+          sort: "oldest"
         }),
         getDashboard(spaceId)
       ]);
@@ -70,9 +79,8 @@ export default function AppDashboard() {
     }
   }
 
-  async function handleFilterChange(filter: StatusFilterValue) {
+  function handleFilterChange(filter: StatusFilterValue) {
     setStatusFilter(filter);
-    await loadData(filter);
   }
 
   async function handleCreateItem(input: {
@@ -86,17 +94,21 @@ export default function AppDashboard() {
       return;
     }
 
-    await createItem({
-      spaceId,
-      createdBy: userId,
-      title: input.title,
-      description: input.description || undefined,
-      itemType: input.itemType,
-      dueAt: input.dueAt ? new Date(input.dueAt).toISOString() : undefined
-    });
+    try {
+      await createItem({
+        spaceId,
+        createdBy: userId,
+        title: input.title,
+        description: input.description || undefined,
+        itemType: input.itemType,
+        dueAt: input.dueAt ? new Date(input.dueAt).toISOString() : undefined
+      });
 
-    await loadData();
-    showToast("Item added");
+      await loadData();
+      showToast("Item added");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to add item");
+    }
   }
 
   async function handleSaveEdit(input: {
@@ -139,25 +151,37 @@ export default function AppDashboard() {
   }
 
   async function handleUpdateStatus(id: string, status: ItemStatus) {
-    await updateItemStatus(id, status);
-    await loadData();
-    showToast("Status updated");
+    try {
+      await updateItemStatus(id, status);
+      await loadData();
+      showToast("Status updated");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to update status");
+    }
   }
 
   async function handleSnoozeTomorrow(id: string) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+    try {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
 
-    await snoozeItem(id, tomorrow.toISOString());
-    await loadData();
-    showToast("Item snoozed");
+      await snoozeItem(id, tomorrow.toISOString());
+      await loadData();
+      showToast("Item snoozed");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to snooze item");
+    }
   }
 
   async function handleClearSnooze(id: string) {
-    await snoozeItem(id, null);
-    await loadData();
-    showToast("Snooze cleared");
+    try {
+      await snoozeItem(id, null);
+      await loadData();
+      showToast("Snooze cleared");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to clear snooze");
+    }
   }
 
   useEffect(() => {
@@ -169,8 +193,22 @@ export default function AppDashboard() {
     }
 
     setStatusFilter("all");
-    void loadData("all");
+    void loadData();
   }, [spaceId]);
+
+  useEffect(() => {
+    if (!newItemRequest) return;
+
+    createSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+    window.setTimeout(() => {
+      const titleInput = document.getElementById("title") as HTMLInputElement | null;
+      titleInput?.focus();
+    }, 150);
+  }, [newItemRequest]);
 
   const heroStats = useMemo(() => {
     return [
@@ -191,6 +229,34 @@ export default function AppDashboard() {
       }
     ];
   }, [dashboard]);
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesStatus = statusFilter === "all" ? true : item.status === statusFilter;
+
+      const matchesSearch = normalizedSearchQuery
+        ? [item.title, item.description ?? "", item.itemType, item.status]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedSearchQuery)
+        : true;
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [items, normalizedSearchQuery, statusFilter]);
+
+  const filterCounts = useMemo(
+    () => ({
+      all: items.length,
+      open: items.filter((item) => item.status === "open").length,
+      in_progress: items.filter((item) => item.status === "in_progress").length,
+      overdue: items.filter((item) => item.status === "overdue").length,
+      cancelled: items.filter((item) => item.status === "cancelled").length
+    }),
+    [items]
+  );
 
   return (
     <main className="app-shell">
@@ -277,7 +343,7 @@ export default function AppDashboard() {
 
           {!loading && !error && (
             <>
-              <section className="glass-section fade-up">
+              <section className="glass-section fade-up" ref={createSectionRef}>
                 <h2 className="section-title">Capture a new nudge</h2>
                 <p className="section-copy" style={{ marginBottom: 18 }}>
                   Add a task, bill, renewal, follow-up, or appointment and place it into motion.
@@ -305,25 +371,29 @@ export default function AppDashboard() {
 
                 <StatusFilterBar
                   value={statusFilter}
-                  onChange={(value) => void handleFilterChange(value)}
-                  counts={{
-                    all: statusFilter === "all" ? items.length : 0,
-                    open: statusFilter === "open" ? items.length : 0,
-                    in_progress: statusFilter === "in_progress" ? items.length : 0,
-                    overdue: statusFilter === "overdue" ? items.length : 0,
-                    cancelled: statusFilter === "cancelled" ? items.length : 0
-                  }}
+                  onChange={handleFilterChange}
+                  counts={filterCounts}
                 />
 
                 <div style={{ height: 16 }} />
 
                 <ActiveFilterSummary
                   value={statusFilter}
-                  visibleCount={items.length}
-                  dueCount={items.filter((item) => Boolean(item.dueAt)).length}
-                  snoozedCount={items.filter((item) => Boolean(item.snoozedUntil)).length}
+                  visibleCount={filteredItems.length}
+                  dueCount={filteredItems.filter((item) => Boolean(item.dueAt)).length}
+                  snoozedCount={filteredItems.filter((item) => Boolean(item.snoozedUntil)).length}
                 />
               </section>
+
+              {searchQuery ? (
+                <section className="glass-section fade-up">
+                  <h2 className="section-title">Search results</h2>
+                  <p className="section-copy">
+                    Showing {filteredItems.length} matching item
+                    {filteredItems.length === 1 ? "" : "s"} for "{searchQuery}".
+                  </p>
+                </section>
+              ) : null}
 
               <section className="glass-section fade-up">
                 <h2 className="section-title">Live items</h2>
@@ -331,9 +401,9 @@ export default function AppDashboard() {
                   Edit, delete, snooze, and update status without losing context.
                 </p>
                 <ItemsList
-                  items={items}
+                  items={filteredItems}
                   activeFilter={statusFilter}
-                  onRefresh={() => loadData()}
+                  onRefresh={loadData}
                   onEdit={setEditingItem}
                   onDelete={handleDeleteItem}
                   onUpdateStatus={handleUpdateStatus}
