@@ -470,9 +470,10 @@ if (process.env.NODE_ENV !== "production") {
       message: "If an account with that email exists, a reset link has been sent"
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to start password reset" });
-  }
+  console.error("Forgot password failed:", error);
+  const message = error instanceof Error ? error.message : "Unknown error";
+  res.status(500).json({ error: `Failed to start password reset: ${message}` });
+}
 });
 
 router.post("/reset-password", async (req, res) => {
